@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitoring Sebaran SPPT PBB-P2 — Kabupaten Tabanan</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --ink:#1B3A34;
+    --ink-light:#2D5048;
+    --ink-pale:#E7EEE9;
+    --paper:#F7F6F2;
+    --paper-raised:#FFFFFF;
+    --gold:#AD7F2E;
+    --gold-light:#E9D9AE;
+    --line:#E4E1D6;
+    --done:#3C7A5A;
+    --done-bg:#E1EDE4;
+    --partial:#B9812C;
+    --partial-bg:#F4E7CC;
+    --none:#A63D40;
+    --none-bg:#F3DFDD;
+    --text:#232019;
+    --text-soft:#635B49;
+    --shadow: 0 1px 2px rgba(27,58,52,0.04), 0 3px 10px rgba(27,58,52,0.04);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--paper);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--gold-light); }
+
+  h1,h2,h3,.serif{ font-family:'Source Serif 4', serif; }
+
+  /* ---------- header ---------- */
+  header.top{
+    background: var(--ink);
+    color: var(--paper-raised);
+    padding: 22px clamp(16px,4vw,48px) 20px;
+    position: sticky; top:0; z-index: 50;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+  }
+  .top-inner{ display:flex; align-items:center; justify-content:space-between; gap: 20px; flex-wrap:wrap; max-width:1400px; margin:0 auto;}
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .seal{
+    width:46px; height:46px; border-radius:50%;
+    border:2px solid var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Source Serif 4', serif; font-weight:700; font-size:15px;
+    color:var(--gold); letter-spacing:0.5px; flex-shrink:0;
+    background: radial-gradient(circle at 35% 30%, rgba(173,127,46,0.18), transparent 70%);
+  }
+  .brand-text h1{ font-size: 19px; font-weight:600; letter-spacing:0.2px; line-height:1.25;}
+  .brand-text p{ font-size:12px; color:#B7C9C2; letter-spacing:0.3px; margin-top:2px;}
+  nav.tabs{ display:flex; gap:6px; background:rgba(255,255,255,0.06); padding:4px; border-radius:9px; }
+  nav.tabs button{
+    appearance:none; border:none; background:transparent; color:#CBD9D3;
+    font-family:'IBM Plex Sans'; font-size:13.5px; font-weight:600;
+    padding:9px 16px; border-radius:6px; cursor:pointer; letter-spacing:0.2px;
+    transition: all .15s ease;
+  }
+  nav.tabs button.active{ background:var(--gold); color:#241C0C; }
+  nav.tabs button:not(.active):hover{ background:rgba(255,255,255,0.09); color:#fff; }
+
+  main{ max-width:1400px; margin: 0 auto; padding: 30px clamp(16px,4vw,48px) 80px; }
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  /* ---------- section headings ---------- */
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin: 38px 0 16px; flex-wrap:wrap;}
+  .section-head h2{ font-size:21px; font-weight:600; color:var(--ink); }
+  .section-head .eyebrow{ font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:1.5px; color:var(--gold); text-transform:uppercase; display:block; margin-bottom:4px;}
+  .section-note{ font-size:12.5px; color:var(--text-soft); }
+
+  /* ---------- stat cards ---------- */
+  .stat-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  @media(max-width:920px){ .stat-row{grid-template-columns:repeat(2,1fr);} }
+  .stat-card{
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:10px;
+    padding:18px 20px; box-shadow:var(--shadow); position:relative; overflow:hidden;
+  }
+  .stat-card .label{ font-size:11.5px; text-transform:uppercase; letter-spacing:1px; color:var(--text-soft); font-weight:600;}
+  .stat-card .value{ font-family:'IBM Plex Mono'; font-size:30px; font-weight:600; color:var(--ink); margin-top:8px; letter-spacing:-0.5px;}
+  .stat-card .sub{ font-size:12px; color:var(--text-soft); margin-top:5px;}
+  .stat-card.accent{ border-color:var(--gold); }
+  .stat-card.accent::after{
+    content:''; position:absolute; top:0; left:0; width:4px; height:100%; background:var(--gold);
+  }
+  .stat-card .value.done{ color:var(--done); }
+  .stat-card .value.none{ color:var(--none); }
+
+  /* ---------- filter bar ---------- */
+  .filter-bar{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:10px;
+    padding:14px 16px; box-shadow:var(--shadow);
+  }
+  .filter-bar label{ font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-soft); font-weight:600; margin-bottom:4px; display:block;}
+  .filter-group{ display:flex; flex-direction:column; min-width:150px; }
+  select, input[type=text], input[type=number], input[type=password]{
+    font-family:'IBM Plex Sans'; font-size:13.5px; padding:8px 10px;
+    border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--text);
+    outline:none;
+  }
+  select:focus, input:focus{ border-color:var(--gold); box-shadow:0 0 0 3px rgba(173,127,46,0.15); }
+  .filter-bar .search-group{ flex:1; min-width:200px; }
+  button.btn{
+    appearance:none; border:1px solid var(--ink); background:var(--ink); color:#fff;
+    font-family:'IBM Plex Sans'; font-weight:600; font-size:13px; padding:9px 16px;
+    border-radius:6px; cursor:pointer; transition:all .15s ease; letter-spacing:0.2px;
+  }
+  button.btn:hover{ background:var(--ink-light); }
+  button.btn.ghost{ background:transparent; color:var(--ink); }
+  button.btn.ghost:hover{ background:var(--ink-pale); }
+  button.btn.gold{ background:var(--gold); border-color:var(--gold); color:#241C0C; }
+  button.btn.gold:hover{ filter:brightness(1.06); }
+  button.btn.small{ padding:6px 12px; font-size:12px; }
+  button.btn:disabled{ opacity:0.45; cursor:not-allowed; }
+
+  /* ---------- charts layout ---------- */
+  .chart-grid{ display:grid; grid-template-columns: 1.3fr 1fr; gap:16px; margin-top:16px;}
+  @media(max-width:920px){ .chart-grid{grid-template-columns:1fr;} }
+  .panel{
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:10px;
+    padding:18px 20px; box-shadow:var(--shadow);
+  }
+  .panel h3{ font-size:14.5px; font-weight:600; color:var(--ink); margin-bottom:14px;}
+  canvas{ max-height:280px; }
+
+  /* ---------- terrace signature grid ---------- */
+  .terrace-wrap{ margin-top:16px; }
+  .terrace-upt{ margin-bottom:22px; }
+  .terrace-upt-label{
+    font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--ink); font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:8px;
+  }
+  .terrace-upt-label::after{ content:''; flex:1; height:1px; background:var(--line); }
+  .terrace-kec-row{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .terrace-kec-name{ width:132px; flex-shrink:0; font-size:11px; color:var(--text-soft); text-align:right; font-weight:500;}
+  .terrace-cells{ display:flex; gap:3px; flex-wrap:wrap; flex:1; }
+  .terrace-cell{
+    width:16px; height:16px; border-radius:3px; cursor:pointer; position:relative;
+    transition: transform .1s ease;
+    border:1px solid rgba(0,0,0,0.06);
+  }
+  .terrace-cell:hover{ transform:scale(1.35); z-index:5; box-shadow:0 2px 6px rgba(0,0,0,0.25); }
+  .terrace-legend{ display:flex; gap:18px; align-items:center; margin-top:14px; font-size:11.5px; color:var(--text-soft); flex-wrap:wrap;}
+  .terrace-legend .sw{ display:inline-flex; align-items:center; gap:6px;}
+  .terrace-legend .sw i{ width:12px; height:12px; border-radius:3px; display:inline-block;}
+  .tooltip{
+    position:fixed; background:var(--ink); color:#fff; padding:8px 11px; border-radius:6px;
+    font-size:12px; pointer-events:none; z-index:200; box-shadow:0 4px 14px rgba(0,0,0,0.25);
+    max-width:220px; line-height:1.5; display:none;
+  }
+  .tooltip b{ color:var(--gold-light); }
+
+  /* ---------- table ---------- */
+  .table-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:10px; margin-top:16px; background:var(--paper-raised); box-shadow:var(--shadow); }
+  table{ width:100%; border-collapse:collapse; font-size:13px; min-width:820px; }
+  thead th{
+    text-align:left; background:var(--ink); color:#E7EEE9; font-weight:600; font-size:11px;
+    text-transform:uppercase; letter-spacing:0.6px; padding:11px 14px; position:sticky; top:0;
+    cursor:pointer; user-select:none; white-space:nowrap;
+  }
+  thead th:hover{ background:var(--ink-light); }
+  thead th .arrow{ opacity:0.5; margin-left:4px; font-size:10px;}
+  tbody td{ padding:9px 14px; border-bottom:1px solid var(--line); font-family:'IBM Plex Mono'; font-size:12.5px; white-space:nowrap;}
+  tbody td.name-cell{ font-family:'IBM Plex Sans'; font-weight:500; }
+  tbody tr:hover{ background:var(--ink-pale); }
+  tbody tr:last-child td{ border-bottom:none; }
+  .badge{
+    display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600;
+    font-family:'IBM Plex Sans';
+  }
+  .badge.done{ background:var(--done-bg); color:var(--done); }
+  .badge.partial{ background:var(--partial-bg); color:var(--partial); }
+  .badge.none{ background:var(--none-bg); color:var(--none); }
+  .bar-track{ width:90px; height:7px; border-radius:4px; background:var(--ink-pale); overflow:hidden; display:inline-block; vertical-align:middle;}
+  .bar-fill{ height:100%; border-radius:4px; background:var(--done); }
+  .pct-text{ font-family:'IBM Plex Mono'; font-size:12px; margin-left:8px; color:var(--text-soft); }
+  .table-foot{ padding:10px 14px; font-size:12px; color:var(--text-soft); border-top:1px solid var(--line);}
+
+  /* ---------- input lapangan ---------- */
+  .gate{ max-width:420px; margin:60px auto; text-align:center; }
+  .gate .seal-big{
+    width:70px; height:70px; border-radius:50%; border:2px solid var(--gold); margin:0 auto 20px;
+    display:flex; align-items:center; justify-content:center; font-family:'Source Serif 4'; font-weight:700;
+    font-size:22px; color:var(--gold);
+  }
+  .gate h2{ font-size:20px; color:var(--ink); margin-bottom:8px;}
+  .gate p{ font-size:13.5px; color:var(--text-soft); margin-bottom:22px; line-height:1.6;}
+  .gate input{ width:100%; text-align:center; font-size:18px; letter-spacing:6px; padding:12px; margin-bottom:12px;}
+  .gate .err{ color:var(--none); font-size:12.5px; margin-bottom:10px; min-height:16px;}
+
+  .input-layout{ display:grid; grid-template-columns: 380px 1fr; gap:20px; align-items:start; }
+  @media(max-width:920px){ .input-layout{grid-template-columns:1fr;} }
+  .form-panel{ background:var(--paper-raised); border:1px solid var(--line); border-radius:10px; padding:22px; box-shadow:var(--shadow); position:sticky; top:100px;}
+  .form-panel label{ font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-soft); font-weight:600; display:block; margin: 14px 0 5px;}
+  .form-panel label:first-child{ margin-top:0; }
+  .form-panel select, .form-panel input{ width:100%; }
+  .target-box{
+    background:var(--paper); border:1px dashed var(--line); border-radius:8px; padding:12px 14px; margin-top:16px;
+    font-size:12.5px; color:var(--text-soft); display:none;
+  }
+  .target-box.show{ display:block; }
+  .target-box .row{ display:flex; justify-content:space-between; padding:3px 0; }
+  .target-box .row b{ font-family:'IBM Plex Mono'; color:var(--ink); }
+  .input-pair{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .save-status{ font-size:12.5px; margin-top:14px; min-height:18px; }
+  .save-status.ok{ color:var(--done); }
+  .save-status.warn{ color:var(--partial); }
+
+  .log-panel{ background:var(--paper-raised); border:1px solid var(--line); border-radius:10px; padding:18px 20px; box-shadow:var(--shadow);}
+  .log-panel h3{ font-size:14.5px; color:var(--ink); margin-bottom:12px;}
+  .log-item{ padding:10px 0; border-bottom:1px solid var(--line); font-size:12.5px; display:flex; justify-content:space-between; gap:10px;}
+  .log-item:last-child{ border-bottom:none; }
+  .log-item .who{ color:var(--text-soft); font-family:'IBM Plex Mono'; font-size:11px; }
+  .empty-note{ font-size:12.5px; color:var(--text-soft); font-style:italic; padding:14px 0;}
+
+  footer{ text-align:center; padding:26px; font-size:11.5px; color:var(--text-soft); }
+  footer button{ background:none; border:none; color:var(--text-soft); text-decoration:underline; cursor:pointer; font-size:11.5px; font-family:'IBM Plex Sans';}
+
+  ::-webkit-scrollbar{height:8px; width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <div class="seal">P2</div>
+      <div class="brand-text">
+        <h1>Monitoring Sebaran SPPT PBB&#8209;P2</h1>
+        <p>Kabupaten Tabanan &middot; UPT Barat / Tengah / Timur</p>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-view="dashboard">Dashboard</button>
+      <button class="tab-btn" data-view="input">Input Petugas Lapangan</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ DASHBOARD VIEW ============ -->
+  <section id="view-dashboard" class="view active">
+
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Ringkasan &middot; real-time</span>
+        <h2>Capaian Sebaran Keseluruhan</h2>
+      </div>
+      <div class="section-note" id="lastUpdateNote">Belum ada pembaruan data.</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="label">Total Target SPPT</div>
+        <div class="value" id="statTarget">0</div>
+        <div class="sub" id="statTargetSub">di 133 desa/kelurahan</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Sudah Tersebar</div>
+        <div class="value done" id="statDone">0</div>
+        <div class="sub" id="statDoneSub">0 desa selesai 100%</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Belum Tersebar</div>
+        <div class="value none" id="statRemain">0</div>
+        <div class="sub" id="statRemainSub">0 desa belum mulai</div>
+      </div>
+      <div class="stat-card accent">
+        <div class="label">Persentase Capaian</div>
+        <div class="value" id="statPct">0%</div>
+        <div class="sub" id="statPctSub">dari total target terfilter</div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Saring data</span>
+        <h2>Filter Wilayah</h2>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label>UPT Wilayah</label>
+        <select id="fUpt"><option value="">Semua UPT</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Kecamatan</label>
+        <select id="fKec"><option value="">Semua Kecamatan</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Desa/Kelurahan</label>
+        <select id="fDesa"><option value="">Semua Desa</option></select>
+      </div>
+      <div class="filter-group search-group">
+        <label>Cari Desa</label>
+        <input type="text" id="fSearch" placeholder="Ketik nama desa/kelurahan...">
+      </div>
+      <div class="filter-group" style="justify-content:flex-end; flex-direction:row; gap:8px; margin-top:18px;">
+        <button class="btn ghost small" id="btnResetFilter">Reset Filter</button>
+        <button class="btn gold small" id="btnExport">Export Data</button>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="panel">
+        <h3>Capaian per Kecamatan</h3>
+        <canvas id="chartKec"></canvas>
+      </div>
+      <div class="panel">
+        <h3>Komposisi per UPT Wilayah</h3>
+        <canvas id="chartUpt"></canvas>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Peta terasering &middot; 133 desa</span>
+        <h2>Sebaran per Desa/Kelurahan</h2>
+      </div>
+      <div class="section-note">Tiap kotak &#61; satu desa. Arahkan kursor untuk detail.</div>
+    </div>
+    <div class="panel">
+      <div class="terrace-wrap" id="terraceWrap"></div>
+      <div class="terrace-legend">
+        <span class="sw"><i style="background:var(--none)"></i> Belum mulai</span>
+        <span class="sw"><i style="background:var(--partial)"></i> Proses</span>
+        <span class="sw"><i style="background:var(--done)"></i> Selesai</span>
+        <span style="color:var(--text-soft);">&middot; intensitas warna &#61; besar persentase</span>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Rincian data</span>
+        <h2>Tabel Sebaran per Desa</h2>
+      </div>
+      <div class="section-note" id="tableCount">133 baris</div>
+    </div>
+    <div class="table-wrap">
+      <table id="mainTable">
+        <thead>
+          <tr>
+            <th data-key="upt">UPT<span class="arrow"></span></th>
+            <th data-key="kec">Kecamatan<span class="arrow"></span></th>
+            <th data-key="desa">Desa/Kelurahan<span class="arrow"></span></th>
+            <th data-key="target_total">Target SPPT<span class="arrow"></span></th>
+            <th data-key="actual_total">Sudah Disebar<span class="arrow"></span></th>
+            <th data-key="remain">Sisa<span class="arrow"></span></th>
+            <th data-key="pct">Persentase<span class="arrow"></span></th>
+            <th data-key="status">Status<span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="table-foot" id="tableFoot"></div>
+    </div>
+
+  </section>
+
+  <!-- ============ INPUT VIEW ============ -->
+  <section id="view-input" class="view">
+
+    <div id="gateBox" class="gate">
+      <div class="seal-big">P2</div>
+      <h2>Akses Petugas Lapangan</h2>
+      <p>Menu ini digunakan petugas untuk memperbarui jumlah SPPT yang telah disebar di lapangan.<br>Masukkan PIN sesuai UPT wilayah Anda untuk melanjutkan.</p>
+      <input type="password" id="pinInput" placeholder="PIN UPT Anda" maxlength="20">
+      <div class="err" id="pinErr"></div>
+      <button class="btn gold" id="btnUnlock" style="width:100%;">Masuk</button>
+          </div>
+
+    <div id="inputBox" style="display:none;">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Update lapangan &middot; <span id="currentUptLabel"></span></span>
+          <h2>Input Jumlah SPPT Tersebar</h2>
+        </div>
+        <button class="btn ghost small" id="btnLock">Kunci Kembali</button>
+      </div>
+
+      <div class="input-layout">
+        <div class="form-panel">
+          <label>Nama Petugas</label>
+          <input type="text" id="petugasName" placeholder="Nama petugas lapangan">
+
+          <label>UPT Wilayah</label>
+          <select id="iUpt" disabled><option value="">Pilih UPT</option></select>
+
+          <label>Kecamatan</label>
+          <select id="iKec"><option value="">Pilih Kecamatan</option></select>
+
+          <label>Desa/Kelurahan</label>
+          <select id="iDesa"><option value="">Pilih Desa</option></select>
+
+          <div class="target-box" id="targetBox">
+            <div class="row"><span>Target Buku 1,2,3</span><b id="tB123">0</b></div>
+            <div class="row"><span>Target Buku 4,5</span><b id="tB45">0</b></div>
+            <div class="row"><span>Total Target</span><b id="tTotal">0</b></div>
+            <div class="row"><span>Sudah tercatat sebelumnya</span><b id="tPrev">0</b></div>
+          </div>
+
+          <label>Jumlah Sudah Disebar</label>
+          <div class="input-pair">
+            <div>
+              <label style="margin:0 0 4px;">Buku 1,2,3</label>
+              <input type="number" id="iB123" min="0" placeholder="0">
+            </div>
+            <div>
+              <label style="margin:0 0 4px;">Buku 4,5</label>
+              <input type="number" id="iB45" min="0" placeholder="0">
+            </div>
+          </div>
+
+          <button class="btn gold" id="btnSave" style="width:100%; margin-top:18px;" disabled>Simpan Pembaruan</button>
+          <div class="save-status" id="saveStatus"></div>
+
+          <div style="margin-top:22px; border-top:1px solid var(--line); padding-top:14px;">
+            <label>Ubah PIN Akses (<span id="pinUptLabel"></span>)</label>
+            <div style="display:flex; gap:8px;">
+              <input type="password" id="newPin" placeholder="PIN baru" maxlength="20">
+              <button class="btn ghost small" id="btnChangePin">Simpan</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="log-panel">
+            <h3>Riwayat Pembaruan Terbaru</h3>
+            <div id="logList"><div class="empty-note">Belum ada pembaruan tercatat.</div></div>
+          </div>
+
+          <div class="log-panel" style="margin-top:16px;">
+            <h3>Sinkronisasi ke Google Sheets</h3>
+            <p style="font-size:12.5px; color:var(--text-soft); margin-bottom:12px; line-height:1.6;">
+              Data otomatis tersimpan &amp; disinkronkan ke Google Sheets pusat setiap kali Anda menyimpan pembaruan, sehingga bisa dilihat semua petugas &amp; perangkat.
+            </p>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn gold small" id="btnSyncNow">Sinkron Sekarang</button>
+            </div>
+            <div class="save-status" id="syncStatus" style="margin-top:10px;"></div>
+          </div>
+
+          <div class="log-panel" style="margin-top:16px;">
+            <h3>Impor / Ekspor Data</h3>
+            <p style="font-size:12.5px; color:var(--text-soft); margin-bottom:12px; line-height:1.6;">
+              Data tersimpan di perangkat ini (browser). Gunakan Ekspor untuk mencadangkan atau mengirim data ke perangkat lain, dan Impor untuk memuat data cadangan.
+            </p>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn ghost small" id="btnExportJson">Ekspor Cadangan (JSON)</button>
+              <button class="btn ghost small" id="btnImportJson">Impor Cadangan (JSON)</button>
+              <input type="file" id="fileImport" accept=".json" style="display:none;">
+              <button class="btn ghost small" id="btnResetData" style="color:var(--none); border-color:var(--none);">Reset ke Target Awal</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<footer>
+  Data disimpan lokal di perangkat ini, dan disinkronkan ke Google Sheets bila URL Web App sudah diatur pada tab Input Petugas Lapangan.
+  <br>
+</footer>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+/* ===================== DATA MASTER (target dari Excel Sebaran_SPPT.xlsx) ===================== */
+const MASTER_DATA = [{"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "BELIMBING", "target_b123": 3007, "target_b45": 2, "target_total": 3009, "actual_b123": 1455, "actual_b45": 0, "actual_total": 1455}, {"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "PUPUAN", "target_b123": 1326, "target_b45": 2, "target_total": 1328, "actual_b123": 275, "actual_b45": 0, "actual_total": 275}, {"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "BANTIRAN", "target_b123": 1669, "target_b45": 1, "target_total": 1670, "actual_b123": 669, "actual_b45": 0, "actual_total": 669}, {"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "BATUNGSEL", "target_b123": 1792, "target_b45": 1, "target_total": 1793, "actual_b123": 539, "actual_b45": 0, "actual_total": 539}, {"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "JELIJIH PUNGGANG", "target_b123": 1559, "target_b45": 0, "target_total": 1559, "actual_b123": 935, "actual_b45": 0, "actual_total": 935}, {"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "KARYASARI", "target_b123": 1776, "target_b45": 0, "target_total": 1776, "actual_b123": 534, "actual_b45": 0, "actual_total": 534}, {"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "KEBON PADANGAN", "target_b123": 3917, "target_b45": 1, "target_total": 3918, "actual_b123": 1525, "actual_b45": 0, "actual_total": 1525}, {"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "MUNDUK TEMU", "target_b123": 90, "target_b45": 0, "target_total": 90, "actual_b123": 9, "actual_b45": 0, "actual_total": 9}, {"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "PADANGAN", "target_b123": 1012, "target_b45": 0, "target_total": 1012, "actual_b123": 204, "actual_b45": 0, "actual_total": 204}, {"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "PAJAHAN", "target_b123": 1574, "target_b45": 2, "target_total": 1576, "actual_b123": 473, "actual_b45": 0, "actual_total": 473}, {"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "PUJUNGAN", "target_b123": 1851, "target_b45": 7, "target_total": 1858, "actual_b123": 372, "actual_b45": 0, "actual_total": 372}, {"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "SAI", "target_b123": 550, "target_b45": 0, "target_total": 550, "actual_b123": 332, "actual_b45": 0, "actual_total": 332}, {"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "SANDA", "target_b123": 1247, "target_b45": 3, "target_total": 1250, "actual_b123": 64, "actual_b45": 1, "actual_total": 65}, {"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "WANAGIRI", "target_b123": 119, "target_b45": 0, "target_total": 119, "actual_b123": 0, "actual_b45": 0, "actual_total": 0}, {"upt": "UPT BARAT", "kec": "PUPUAN", "desa": "MUNDEH", "target_b123": 313, "target_b45": 0, "target_total": 313, "actual_b123": 63, "actual_b45": 0, "actual_total": 63}, {"upt": "UPT BARAT", "kec": "SELEMADEG", "desa": "ANTAP", "target_b123": 1837, "target_b45": 21, "target_total": 1858, "actual_b123": 320, "actual_b45": 0, "actual_total": 320}, {"upt": "UPT BARAT", "kec": "SELEMADEG", "desa": "BAJERA", "target_b123": 1559, "target_b45": 0, "target_total": 1559, "actual_b123": 184, "actual_b45": 0, "actual_total": 184}, {"upt": "UPT BARAT", "kec": "SELEMADEG", "desa": "BAJERA UTARA", "target_b123": 680, "target_b45": 0, "target_total": 680, "actual_b123": 590, "actual_b45": 0, "actual_total": 590}, {"upt": "UPT BARAT", "kec": "SELEMADEG", "desa": "BEREMBENG", "target_b123": 2053, "target_b45": 0, "target_total": 2053, "actual_b123": 302, "actual_b45": 0, "actual_total": 302}, {"upt": "UPT BARAT", "kec": "SELEMADEG", "desa": "MANIKYANG", "target_b123": 407, "target_b45": 0, "target_total": 407, "actual_b123": 375, "actual_b45": 0, "actual_total": 375}, {"upt": "UPT BARAT", "kec": "SELEMADEG", "desa": "PUPUAN SAWAH", "target_b123": 683, "target_b45": 1, "target_total": 684, "actual_b123": 615, "actual_b45": 0, "actual_total": 615}, {"upt": "UPT BARAT", "kec": "SELEMADEG", "desa": "SELEMADEG", "target_b123": 1193, "target_b45": 4, "target_total": 1197, "actual_b123": 859, "actual_b45": 3, "actual_total": 862}, {"upt": "UPT BARAT", "kec": "SELEMADEG", "desa": "SERAMPINGAN", "target_b123": 1510, "target_b45": 0, "target_total": 1510, "actual_b123": 1185, "actual_b45": 0, "actual_total": 1185}, {"upt": "UPT BARAT", "kec": "SELEMADEG", "desa": "WANAGIRI", "target_b123": 1525, "target_b45": 1, "target_total": 1526, "actual_b123": 0, "actual_b45": 0, "actual_total": 0}, {"upt": "UPT BARAT", "kec": "SELEMADEG", "desa": "WANAGIRI KAUH", "target_b123": 1145, "target_b45": 9, "target_total": 1154, "actual_b123": 916, "actual_b45": 4, "actual_total": 920}, {"upt": "UPT BARAT", "kec": "SELEMADEG BARAT", "desa": "ANGKAH", "target_b123": 1257, "target_b45": 1, "target_total": 1258, "actual_b123": 329, "actual_b45": 0, "actual_total": 329}, {"upt": "UPT BARAT", "kec": "SELEMADEG BARAT", "desa": "ANTOSARI", "target_b123": 1600, "target_b45": 0, "target_total": 1600, "actual_b123": 985, "actual_b45": 0, "actual_total": 985}, {"upt": "UPT BARAT", "kec": "SELEMADEG BARAT", "desa": "BENGKEL SARI", "target_b123": 1609, "target_b45": 3, "target_total": 1612, "actual_b123": 471, "actual_b45": 3, "actual_total": 474}, {"upt": "UPT BARAT", "kec": "SELEMADEG BARAT", "desa": "LALANG LINGGAH", "target_b123": 2297, "target_b45": 22, "target_total": 2319, "actual_b123": 1079, "actual_b45": 11, "actual_total": 1090}, {"upt": "UPT BARAT", "kec": "SELEMADEG BARAT", "desa": "LUMBUNG", "target_b123": 1652, "target_b45": 2, "target_total": 1654, "actual_b123": 1176, "actual_b45": 2, "actual_total": 1178}, {"upt": "UPT BARAT", "kec": "SELEMADEG BARAT", "desa": "LUMBUNG KAUH", "target_b123": 765, "target_b45": 2, "target_total": 767, "actual_b123": 383, "actual_b45": 2, "actual_total": 385}, {"upt": "UPT BARAT", "kec": "SELEMADEG BARAT", "desa": "MUNDEH", "target_b123": 2064, "target_b45": 7, "target_total": 2071, "actual_b123": 63, "actual_b45": 0, "actual_total": 63}, {"upt": "UPT BARAT", "kec": "SELEMADEG BARAT", "desa": "MUNDEH KANGIN", "target_b123": 1010, "target_b45": 3, "target_total": 1013, "actual_b123": 355, "actual_b45": 2, "actual_total": 357}, {"upt": "UPT BARAT", "kec": "SELEMADEG BARAT", "desa": "MUNDEH KAUH", "target_b123": 866, "target_b45": 1, "target_total": 867, "actual_b123": 394, "actual_b45": 1, "actual_total": 395}, {"upt": "UPT BARAT", "kec": "SELEMADEG BARAT", "desa": "SELABIH", "target_b123": 866, "target_b45": 2, "target_total": 868, "actual_b123": 433, "actual_b45": 2, "actual_total": 435}, {"upt": "UPT BARAT", "kec": "SELEMADEG BARAT", "desa": "TIYING GADING", "target_b123": 1177, "target_b45": 2, "target_total": 1179, "actual_b123": 625, "actual_b45": 1, "actual_total": 626}, {"upt": "UPT BARAT", "kec": "SELEMADEG TIMUR", "desa": "BANTAS", "target_b123": 1811, "target_b45": 3, "target_total": 1814, "actual_b123": 0, "actual_b45": 3, "actual_total": 3}, {"upt": "UPT BARAT", "kec": "SELEMADEG TIMUR", "desa": "BERABAN", "target_b123": 1408, "target_b45": 8, "target_total": 1416, "actual_b123": 634, "actual_b45": 4, "actual_total": 638}, {"upt": "UPT BARAT", "kec": "SELEMADEG TIMUR", "desa": "DALANG", "target_b123": 1618, "target_b45": 0, "target_total": 1618, "actual_b123": 1237, "actual_b45": 0, "actual_total": 1237}, {"upt": "UPT BARAT", "kec": "SELEMADEG TIMUR", "desa": "GADUNG SARI", "target_b123": 805, "target_b45": 1, "target_total": 806, "actual_b123": 322, "actual_b45": 0, "actual_total": 322}, {"upt": "UPT BARAT", "kec": "SELEMADEG TIMUR", "desa": "GADUNGAN", "target_b123": 2437, "target_b45": 0, "target_total": 2437, "actual_b123": 488, "actual_b45": 0, "actual_total": 488}, {"upt": "UPT BARAT", "kec": "SELEMADEG TIMUR", "desa": "GUNUNG SALAK", "target_b123": 1205, "target_b45": 1, "target_total": 1206, "actual_b123": 482, "actual_b45": 0, "actual_total": 482}, {"upt": "UPT BARAT", "kec": "SELEMADEG TIMUR", "desa": "MAMBANG", "target_b123": 2860, "target_b45": 0, "target_total": 2860, "actual_b123": 1287, "actual_b45": 0, "actual_total": 1287}, {"upt": "UPT BARAT", "kec": "SELEMADEG TIMUR", "desa": "MEGATI", "target_b123": 2557, "target_b45": 1, "target_total": 2558, "actual_b123": 515, "actual_b45": 1, "actual_total": 516}, {"upt": "UPT BARAT", "kec": "SELEMADEG TIMUR", "desa": "TANGGUNTITI", "target_b123": 1905, "target_b45": 0, "target_total": 1905, "actual_b123": 1143, "actual_b45": 0, "actual_total": 1143}, {"upt": "UPT BARAT", "kec": "SELEMADEG TIMUR", "desa": "TEGAL MENGKEB", "target_b123": 1830, "target_b45": 6, "target_total": 1836, "actual_b123": 1626, "actual_b45": 3, "actual_total": 1629}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "BATUAJI", "target_b123": 2319, "target_b45": 0, "target_total": 2319, "actual_b123": 1362, "actual_b45": 0, "actual_total": 1362}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "BATURITI", "target_b123": 2060, "target_b45": 1, "target_total": 2061, "actual_b123": 418, "actual_b45": 1, "actual_total": 419}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "BELUMBANG", "target_b123": 1684, "target_b45": 0, "target_total": 1684, "actual_b123": 824, "actual_b45": 0, "actual_total": 824}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "KELATING", "target_b123": 1820, "target_b45": 8, "target_total": 1828, "actual_b123": 432, "actual_b45": 7, "actual_total": 439}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "KERAMBITAN", "target_b123": 1390, "target_b45": 0, "target_total": 1390, "actual_b123": 318, "actual_b45": 0, "actual_total": 318}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "KESIUT", "target_b123": 1150, "target_b45": 0, "target_total": 1150, "actual_b123": 460, "actual_b45": 0, "actual_total": 460}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "KUKUH", "target_b123": 1484, "target_b45": 1, "target_total": 1485, "actual_b123": 502, "actual_b45": 1, "actual_total": 503}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "MELILING", "target_b123": 1696, "target_b45": 1, "target_total": 1697, "actual_b123": 321, "actual_b45": 1, "actual_total": 322}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "PANGKUNG KARUNG", "target_b123": 1876, "target_b45": 2, "target_total": 1878, "actual_b123": 358, "actual_b45": 2, "actual_total": 360}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "PENARUKAN", "target_b123": 1357, "target_b45": 0, "target_total": 1357, "actual_b123": 0, "actual_b45": 0, "actual_total": 0}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "SAMSAM", "target_b123": 2519, "target_b45": 6, "target_total": 2525, "actual_b123": 536, "actual_b45": 5, "actual_total": 541}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "SEMBUNG GEDE", "target_b123": 3506, "target_b45": 5, "target_total": 3511, "actual_b123": 384, "actual_b45": 6, "actual_total": 390}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "TIBUBIU", "target_b123": 1651, "target_b45": 5, "target_total": 1656, "actual_b123": 509, "actual_b45": 5, "actual_total": 514}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "TIMPAG", "target_b123": 2630, "target_b45": 0, "target_total": 2630, "actual_b123": 1218, "actual_b45": 0, "actual_total": 1218}, {"upt": "UPT TENGAH", "kec": "KERAMBITAN", "desa": "TISTA", "target_b123": 757, "target_b45": 0, "target_total": 757, "actual_b123": 250, "actual_b45": 0, "actual_total": 250}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "BABAHAN", "target_b123": 1611, "target_b45": 2, "target_total": 1613, "actual_b123": 4, "actual_b45": 0, "actual_total": 4}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "BIAUNG", "target_b123": 1668, "target_b45": 0, "target_total": 1668, "actual_b123": 0, "actual_b45": 0, "actual_total": 0}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "BURUAN", "target_b123": 2251, "target_b45": 0, "target_total": 2251, "actual_b123": 6, "actual_b45": 0, "actual_total": 6}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "JATILUWIH", "target_b123": 1865, "target_b45": 0, "target_total": 1865, "actual_b123": 0, "actual_b45": 0, "actual_total": 0}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "REJASA", "target_b123": 1035, "target_b45": 0, "target_total": 1035, "actual_b123": 0, "actual_b45": 0, "actual_total": 0}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "SANGKETAN", "target_b123": 1231, "target_b45": 0, "target_total": 1231, "actual_b123": 0, "actual_b45": 0, "actual_total": 0}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "SENGANAN KANGIN", "target_b123": 2667, "target_b45": 0, "target_total": 2667, "actual_b123": 0, "actual_b45": 0, "actual_total": 0}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "TAJEN", "target_b123": 1888, "target_b45": 0, "target_total": 1888, "actual_b123": 0, "actual_b45": 0, "actual_total": 0}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "WANGAYA GEDE", "target_b123": 3253, "target_b45": 0, "target_total": 3253, "actual_b123": 0, "actual_b45": 0, "actual_total": 0}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "JEGU", "target_b123": 2273, "target_b45": 0, "target_total": 2273, "actual_b123": 5, "actual_b45": 0, "actual_total": 5}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "MENGESTA", "target_b123": 1652, "target_b45": 1, "target_total": 1653, "actual_b123": 0, "actual_b45": 0, "actual_total": 0}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "PENATAHAN", "target_b123": 2004, "target_b45": 0, "target_total": 2004, "actual_b123": 221, "actual_b45": 0, "actual_total": 221}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "PENEBEL", "target_b123": 1946, "target_b45": 1, "target_total": 1947, "actual_b123": 19, "actual_b45": 0, "actual_total": 19}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "PESAGI", "target_b123": 1196, "target_b45": 0, "target_total": 1196, "actual_b123": 0, "actual_b45": 0, "actual_total": 0}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "PITRA", "target_b123": 1391, "target_b45": 1, "target_total": 1392, "actual_b123": 0, "actual_b45": 0, "actual_total": 0}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "RIANG GEDE", "target_b123": 2531, "target_b45": 0, "target_total": 2531, "actual_b123": 6, "actual_b45": 0, "actual_total": 6}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "TEGALLINGGAH", "target_b123": 882, "target_b45": 0, "target_total": 882, "actual_b123": 1, "actual_b45": 0, "actual_total": 1}, {"upt": "UPT TENGAH", "kec": "PENEBEL", "desa": "TENGKUDAK", "target_b123": 2158, "target_b45": 0, "target_total": 2158, "actual_b123": 0, "actual_b45": 0, "actual_total": 0}, {"upt": "UPT TENGAH", "kec": "TABANAN", "desa": "BONGAN", "target_b123": 4792, "target_b45": 3, "target_total": 4795, "actual_b123": 232, "actual_b45": 3, "actual_total": 235}, {"upt": "UPT TENGAH", "kec": "TABANAN", "desa": "BUAHAN", "target_b123": 1448, "target_b45": 0, "target_total": 1448, "actual_b123": 254, "actual_b45": 0, "actual_total": 254}, {"upt": "UPT TENGAH", "kec": "TABANAN", "desa": "DAJAN PEKEN", "target_b123": 2795, "target_b45": 6, "target_total": 2801, "actual_b123": 254, "actual_b45": 6, "actual_total": 260}, {"upt": "UPT TENGAH", "kec": "TABANAN", "desa": "DELOD PEKEN", "target_b123": 2785, "target_b45": 35, "target_total": 2820, "actual_b123": 209, "actual_b45": 30, "actual_total": 239}, {"upt": "UPT TENGAH", "kec": "TABANAN", "desa": "DENBANTAS", "target_b123": 3300, "target_b45": 7, "target_total": 3307, "actual_b123": 404, "actual_b45": 5, "actual_total": 409}, {"upt": "UPT TENGAH", "kec": "TABANAN", "desa": "DAUH PEKEN", "target_b123": 4687, "target_b45": 49, "target_total": 4736, "actual_b123": 370, "actual_b45": 39, "actual_total": 409}, {"upt": "UPT TENGAH", "kec": "TABANAN", "desa": "GUBUG", "target_b123": 3140, "target_b45": 3, "target_total": 3143, "actual_b123": 28, "actual_b45": 3, "actual_total": 31}, {"upt": "UPT TENGAH", "kec": "TABANAN", "desa": "SUBAMIA", "target_b123": 1656, "target_b45": 0, "target_total": 1656, "actual_b123": 39, "actual_b45": 0, "actual_total": 39}, {"upt": "UPT TENGAH", "kec": "TABANAN", "desa": "SUDIMARA", "target_b123": 4148, "target_b45": 9, "target_total": 4157, "actual_b123": 1044, "actual_b45": 5, "actual_total": 1049}, {"upt": "UPT TENGAH", "kec": "TABANAN", "desa": "TUNJUK", "target_b123": 2963, "target_b45": 4, "target_total": 2967, "actual_b123": 502, "actual_b45": 4, "actual_total": 506}, {"upt": "UPT TENGAH", "kec": "TABANAN", "desa": "WANASARI", "target_b123": 3748, "target_b45": 1, "target_total": 3749, "actual_b123": 789, "actual_b45": 1, "actual_total": 790}, {"upt": "UPT TIMUR", "kec": "BATURITI", "desa": "ANGSERI", "target_b123": 2116, "target_b45": 0, "target_total": 2116, "actual_b123": 320, "actual_b45": 0, "actual_total": 320}, {"upt": "UPT TIMUR", "kec": "BATURITI", "desa": "ANTAPAN", "target_b123": 1426, "target_b45": 2, "target_total": 1428, "actual_b123": 207, "actual_b45": 2, "actual_total": 209}, {"upt": "UPT TIMUR", "kec": "BATURITI", "desa": "APUAN", "target_b123": 1612, "target_b45": 0, "target_total": 1612, "actual_b123": 510, "actual_b45": 0, "actual_total": 510}, {"upt": "UPT TIMUR", "kec": "BATURITI", "desa": "BANGLI", "target_b123": 1939, "target_b45": 2, "target_total": 1941, "actual_b123": 160, "actual_b45": 2, "actual_total": 162}, {"upt": "UPT TIMUR", "kec": "BATURITI", "desa": "BATUNYA", "target_b123": 1188, "target_b45": 24, "target_total": 1212, "actual_b123": 205, "actual_b45": 11, "actual_total": 216}, {"upt": "UPT TIMUR", "kec": "BATURITI", "desa": "BATURITI", "target_b123": 2046, "target_b45": 22, "target_total": 2068, "actual_b123": 140, "actual_b45": 11, "actual_total": 151}, {"upt": "UPT TIMUR", "kec": "BATURITI", "desa": "CANDI KUNING", "target_b123": 2601, "target_b45": 38, "target_total": 2639, "actual_b123": 355, "actual_b45": 26, "actual_total": 381}, {"upt": "UPT TIMUR", "kec": "BATURITI", "desa": "LUWUS", "target_b123": 1696, "target_b45": 7, "target_total": 1703, "actual_b123": 100, "actual_b45": 4, "actual_total": 104}, {"upt": "UPT TIMUR", "kec": "BATURITI", "desa": "MEKARSARI", "target_b123": 1762, "target_b45": 4, "target_total": 1766, "actual_b123": 400, "actual_b45": 4, "actual_total": 404}, {"upt": "UPT TIMUR", "kec": "BATURITI", "desa": "PEREAN KANGIN", "target_b123": 1749, "target_b45": 0, "target_total": 1749, "actual_b123": 350, "actual_b45": 0, "actual_total": 350}, {"upt": "UPT TIMUR", "kec": "BATURITI", "desa": "PEREAN KAUH", "target_b123": 1318, "target_b45": 0, "target_total": 1318, "actual_b123": 447, "actual_b45": 0, "actual_total": 447}, {"upt": "UPT TIMUR", "kec": "BATURITI", "desa": "PEREAN TENGAH", "target_b123": 998, "target_b45": 3, "target_total": 1001, "actual_b123": 170, "actual_b45": 3, "actual_total": 173}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "ABIAN TUWUNG", "target_b123": 2587, "target_b45": 16, "target_total": 2603, "actual_b123": 138, "actual_b45": 12, "actual_total": 150}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "BANJAR ANYAR", "target_b123": 8321, "target_b45": 105, "target_total": 8426, "actual_b123": 366, "actual_b45": 54, "actual_total": 420}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "BELALANG", "target_b123": 2108, "target_b45": 24, "target_total": 2132, "actual_b123": 119, "actual_b45": 15, "actual_total": 134}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "BENGKEL", "target_b123": 1797, "target_b45": 2, "target_total": 1799, "actual_b123": 21, "actual_b45": 2, "actual_total": 23}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "BERABAN", "target_b123": 2909, "target_b45": 352, "target_total": 3261, "actual_b123": 1785, "actual_b45": 321, "actual_total": 2106}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "BUWIT", "target_b123": 1265, "target_b45": 6, "target_total": 1271, "actual_b123": 2, "actual_b45": 6, "actual_total": 8}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "CEPAKA", "target_b123": 2046, "target_b45": 32, "target_total": 2078, "actual_b123": 13, "actual_b45": 19, "actual_total": 32}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "KABA KABA", "target_b123": 1984, "target_b45": 17, "target_total": 2001, "actual_b123": 15, "actual_b45": 11, "actual_total": 26}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "KEDIRI", "target_b123": 3468, "target_b45": 13, "target_total": 3481, "actual_b123": 48, "actual_b45": 9, "actual_total": 57}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "NYAMBU", "target_b123": 1571, "target_b45": 12, "target_total": 1583, "actual_b123": 16, "actual_b45": 11, "actual_total": 27}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "NYITDAH", "target_b123": 2835, "target_b45": 3, "target_total": 2838, "actual_b123": 45, "actual_b45": 3, "actual_total": 48}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "PANDAK BANDUNG", "target_b123": 1281, "target_b45": 10, "target_total": 1291, "actual_b123": 33, "actual_b45": 7, "actual_total": 40}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "PANDAK GEDE", "target_b123": 2916, "target_b45": 9, "target_total": 2925, "actual_b123": 160, "actual_b45": 4, "actual_total": 164}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "PANGKUNGTIBAH", "target_b123": 1375, "target_b45": 24, "target_total": 1399, "actual_b123": 478, "actual_b45": 23, "actual_total": 501}, {"upt": "UPT TIMUR", "kec": "KEDIRI", "desa": "PEJATEN", "target_b123": 1249, "target_b45": 0, "target_total": 1249, "actual_b123": 8, "actual_b45": 0, "actual_total": 8}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "APUAN", "target_b123": 40, "target_b45": 0, "target_total": 40, "actual_b123": 510, "actual_b45": 0, "actual_total": 510}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "BARU", "target_b123": 855, "target_b45": 0, "target_total": 855, "actual_b123": 150, "actual_b45": 0, "actual_total": 150}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "BATAN NYUH", "target_b123": 1029, "target_b45": 0, "target_total": 1029, "actual_b123": 140, "actual_b45": 0, "actual_total": 140}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "BERINGKIT", "target_b123": 817, "target_b45": 0, "target_total": 817, "actual_b123": 107, "actual_b45": 0, "actual_total": 107}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "CAU BLAYU", "target_b123": 1246, "target_b45": 0, "target_total": 1246, "actual_b123": 160, "actual_b45": 0, "actual_total": 160}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "GELUNTUNG", "target_b123": 244, "target_b45": 0, "target_total": 244, "actual_b123": 18, "actual_b45": 0, "actual_total": 18}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "KUKUH", "target_b123": 815, "target_b45": 2, "target_total": 817, "actual_b123": 155, "actual_b45": 2, "actual_total": 157}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "KUWUM", "target_b123": 1111, "target_b45": 0, "target_total": 1111, "actual_b123": 250, "actual_b45": 0, "actual_total": 250}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "MARGA", "target_b123": 1118, "target_b45": 0, "target_total": 1118, "actual_b123": 80, "actual_b45": 0, "actual_total": 80}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "MARGA DAUH PURI", "target_b123": 2072, "target_b45": 0, "target_total": 2072, "actual_b123": 110, "actual_b45": 0, "actual_total": 110}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "PAYANGAN", "target_b123": 1119, "target_b45": 0, "target_total": 1119, "actual_b123": 115, "actual_b45": 0, "actual_total": 115}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "PEKEN", "target_b123": 472, "target_b45": 1, "target_total": 473, "actual_b123": 115, "actual_b45": 1, "actual_total": 116}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "PETIGA", "target_b123": 593, "target_b45": 0, "target_total": 593, "actual_b123": 109, "actual_b45": 0, "actual_total": 109}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "SELANBAWAK", "target_b123": 1243, "target_b45": 0, "target_total": 1243, "actual_b123": 175, "actual_b45": 0, "actual_total": 175}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "TEGAL JADI", "target_b123": 1168, "target_b45": 0, "target_total": 1168, "actual_b123": 90, "actual_b45": 0, "actual_total": 90}, {"upt": "UPT TIMUR", "kec": "MARGA", "desa": "TUA", "target_b123": 1483, "target_b45": 0, "target_total": 1483, "actual_b123": 250, "actual_b45": 0, "actual_total": 250}];
+
+const STORAGE_KEY = 'sppt_tabanan_data_v1';
+const LOG_KEY = 'sppt_tabanan_log_v1';
+const DATA_VERSION_KEY = 'sppt_tabanan_data_version';
+const DATA_VERSION = '2026-07-13-01';
+
+/* ===================== SINKRONISASI GOOGLE SHEETS ===================== */
+// URL Web App Apps Script sudah ditanam permanen di sini, sehingga TIDAK
+// perlu diisi ulang oleh petugas. Selama Anda menggunakan
+// Deploy > Manage deployments > New version (bukan New deployment) saat
+// mengubah kode GAS di kemudian hari, URL ini akan tetap sama dan file
+// HTML ini tidak perlu diedit lagi.
+const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbzV9MiaAIP3JVwdsD1Tum1PGHwuidxEgPcJEabfxz-kI0e4sm2rnYHGcIG6HaJP4-kuRg/exec';
+
+const SYNC_URL_KEY = 'sppt_tabanan_apps_script_url';
+const SYNC_QUEUE_KEY = 'sppt_tabanan_sync_queue_v1';
+
+function getSyncUrl(){ return (localStorage.getItem(SYNC_URL_KEY) || DEFAULT_SYNC_URL || '').trim(); }
+function setSyncUrl(url){ localStorage.setItem(SYNC_URL_KEY, url.trim()); }
+function loadQueue(){ try{ return JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY)) || []; }catch(e){ return []; } }
+function saveQueue(q){ localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(q)); }
+function enqueueUpdate(payload){
+  const q = loadQueue();
+  // ganti antrean lama untuk desa yang sama supaya tidak kirim data usang berulang
+  const filtered = q.filter(p => !(p.upt===payload.upt && p.kec===payload.kec && p.desa===payload.desa));
+  filtered.push(payload);
+  saveQueue(filtered);
+  updateSyncStatus();
+}
+
+function setSyncStatusText(text, cls){
+  const el = document.getElementById('syncStatus');
+  if(!el) return;
+  el.textContent = text;
+  el.className = 'save-status ' + (cls || '');
+}
+function updateSyncStatus(){
+  const el = document.getElementById('syncStatus');
+  if(!el) return;
+  const url = getSyncUrl();
+  const q = loadQueue();
+  if(!url){
+    setSyncStatusText('Belum tersambung ke Google Sheets. Data hanya tersimpan di perangkat ini.', 'warn');
+    return;
+  }
+  if(q.length > 0){
+    setSyncStatusText(`Tersambung. ${q.length} pembaruan menunggu dikirim ke server...`, 'warn');
+  } else {
+    setSyncStatusText('Tersambung ke Google Sheets. Data tersinkron.', 'ok');
+  }
+}
+
+async function pushSingleUpdate(payload){
+  const url = getSyncUrl();
+  if(!url) return false;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // hindari CORS preflight di Apps Script
+    body: JSON.stringify(payload)
+  });
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'Gagal menyimpan ke server');
+  return true;
+}
+
+async function flushSyncQueue(){
+  const url = getSyncUrl();
+  if(!url) return;
+  let q = loadQueue();
+  if(q.length === 0){ updateSyncStatus(); return; }
+  while(q.length > 0){
+    const item = q[0];
+    try{
+      await pushSingleUpdate(item);
+      q.shift();
+      saveQueue(q);
+    }catch(err){
+      updateSyncStatus();
+      return; // berhenti, coba lagi nanti (mungkin sedang offline)
+    }
+  }
+  saveQueue(q);
+  updateSyncStatus();
+}
+
+async function syncFromServer(manual){
+  const url = getSyncUrl();
+  if(!url){ if(manual) alert('Isi dulu URL Web App Apps Script pada kolom Sinkronisasi.'); return; }
+  setSyncStatusText('Mengambil data terbaru dari server...', '');
+  try{
+    const res = await fetch(url, { method:'GET' });
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.error || 'Gagal memuat data server');
+
+    // data server jadi acuan utama, lalu terapkan ulang antrean lokal yang belum terkirim
+    const serverRows = json.data.map(r => ({
+      upt: r.upt, kec: r.kec, desa: r.desa,
+      target_b123: Number(r.target_b123)||0,
+      target_b45: Number(r.target_b45)||0,
+      target_total: Number(r.target_total)||0,
+      actual_b123: Number(r.actual_b123)||0,
+      actual_b45: Number(r.actual_b45)||0,
+      actual_total: Number(r.actual_total)||0,
+    }));
+    if(serverRows.length > 0){
+      const queue = loadQueue();
+      queue.forEach(q=>{
+        const row = serverRows.find(r=>r.upt===q.upt && r.kec===q.kec && r.desa===q.desa);
+        if(row){
+          row.actual_b123 = Number(q.actual_b123)||0;
+          row.actual_b45 = Number(q.actual_b45)||0;
+          row.actual_total = row.actual_b123 + row.actual_b45;
+        }
+      });
+      dataset = serverRows;
+      persistData();
+      renderLog && renderLog();
+      renderAll();
+    }
+    setSyncStatusText('Tersinkron dengan server pada ' + new Date().toLocaleString('id-ID',{dateStyle:'short', timeStyle:'medium'}), 'ok');
+    if(manual) flushSyncQueue();
+  }catch(err){
+    setSyncStatusText('Gagal mengambil data dari server: ' + err.message, 'warn');
+  }
+}
+
+/* ===================== STATE ===================== */
+let dataset = loadData();
+let sortState = { key:'pct', dir:'asc' };
+
+function loadData(){
+  const storedVersion = localStorage.getItem(DATA_VERSION_KEY);
+  if(storedVersion !== DATA_VERSION){
+    localStorage.setItem(DATA_VERSION_KEY, DATA_VERSION);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(MASTER_DATA));
+    localStorage.setItem(STORAGE_KEY + '_ts', new Date().toISOString());
+    return JSON.parse(JSON.stringify(MASTER_DATA));
+  }
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){
+    try{
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed) && parsed.length === MASTER_DATA.length) return parsed;
+    }catch(e){}
+  }
+  return JSON.parse(JSON.stringify(MASTER_DATA));
+}
+function persistData(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(dataset));
+  localStorage.setItem(STORAGE_KEY + '_ts', new Date().toISOString());
+}
+function loadLog(){
+  try{ return JSON.parse(localStorage.getItem(LOG_KEY)) || []; }catch(e){ return []; }
+}
+function persistLog(log){ localStorage.setItem(LOG_KEY, JSON.stringify(log.slice(0,50))); }
+
+function computeRow(r){
+  const actual_total = (r.actual_b123||0) + (r.actual_b45||0);
+  const target_total = r.target_total || 0;
+  const remain = Math.max(target_total - actual_total, 0);
+  const pct = target_total > 0 ? Math.min((actual_total/target_total)*100, 100) : 0;
+  let status = 'none';
+  if(pct >= 100) status = 'done';
+  else if(pct > 0) status = 'partial';
+  return {...r, actual_total, remain, pct, status};
+}
+
+/* ===================== TABS ===================== */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-' + btn.dataset.view).classList.add('active');
+  });
+});
+
+/* ===================== FILTER SETUP ===================== */
+const uptList = [...new Set(MASTER_DATA.map(d=>d.upt))];
+const kecByUpt = {};
+uptList.forEach(u=>{ kecByUpt[u] = [...new Set(MASTER_DATA.filter(d=>d.upt===u).map(d=>d.kec))]; });
+
+function fillSelect(sel, items, placeholder){
+  sel.innerHTML = `<option value="">${placeholder}</option>` + items.map(i=>`<option value="${i}">${i}</option>`).join('');
+}
+fillSelect(document.getElementById('fUpt'), uptList, 'Semua UPT');
+fillSelect(document.getElementById('iUpt'), uptList, 'Pilih UPT');
+
+function desaOptionsFor(upt, kec){
+  return [...new Set(MASTER_DATA
+    .filter(d => (!upt || d.upt===upt) && (!kec || d.kec===kec))
+    .map(d=>d.desa))].sort();
+}
+document.getElementById('fUpt').addEventListener('change', e=>{
+  const kecSel = document.getElementById('fKec');
+  const upt = e.target.value;
+  fillSelect(kecSel, upt ? kecByUpt[upt] : [...new Set(MASTER_DATA.map(d=>d.kec))], 'Semua Kecamatan');
+  fillSelect(document.getElementById('fDesa'), desaOptionsFor(upt, ''), 'Semua Desa');
+  renderAll();
+});
+document.getElementById('fKec').addEventListener('change', e=>{
+  const upt = document.getElementById('fUpt').value;
+  fillSelect(document.getElementById('fDesa'), desaOptionsFor(upt, e.target.value), 'Semua Desa');
+  renderAll();
+});
+document.getElementById('fDesa').addEventListener('change', renderAll);
+document.getElementById('fSearch').addEventListener('input', renderAll);
+document.getElementById('btnResetFilter').addEventListener('click', ()=>{
+  document.getElementById('fUpt').value='';
+  fillSelect(document.getElementById('fKec'), [...new Set(MASTER_DATA.map(d=>d.kec))], 'Semua Kecamatan');
+  fillSelect(document.getElementById('fDesa'), desaOptionsFor('', ''), 'Semua Desa');
+  document.getElementById('fSearch').value='';
+  renderAll();
+});
+fillSelect(document.getElementById('fDesa'), desaOptionsFor('', ''), 'Semua Desa');
+
+function getFiltered(){
+  const upt = document.getElementById('fUpt').value;
+  const kec = document.getElementById('fKec').value;
+  const desa = document.getElementById('fDesa').value;
+  const search = document.getElementById('fSearch').value.trim().toLowerCase();
+  return dataset.map(computeRow).filter(r=>{
+    if(upt && r.upt !== upt) return false;
+    if(kec && r.kec !== kec) return false;
+    if(desa && r.desa !== desa) return false;
+    if(search && !r.desa.toLowerCase().includes(search)) return false;
+    return true;
+  });
+}
+
+/* ===================== RENDER: STAT CARDS ===================== */
+function fmt(n){ return Math.round(n).toLocaleString('id-ID'); }
+
+function renderStats(rows){
+  const target = rows.reduce((a,r)=>a+r.target_total,0);
+  const done = rows.reduce((a,r)=>a+r.actual_total,0);
+  const remain = Math.max(target-done,0);
+  const pct = target>0 ? (done/target*100) : 0;
+  const desaDone = rows.filter(r=>r.status==='done').length;
+  const desaNone = rows.filter(r=>r.status==='none').length;
+
+  document.getElementById('statTarget').textContent = fmt(target);
+  document.getElementById('statTargetSub').textContent = `di ${rows.length} desa/kelurahan`;
+  document.getElementById('statDone').textContent = fmt(done);
+  document.getElementById('statDoneSub').textContent = `${desaDone} desa selesai 100%`;
+  document.getElementById('statRemain').textContent = fmt(remain);
+  document.getElementById('statRemainSub').textContent = `${desaNone} desa belum mulai`;
+  document.getElementById('statPct').textContent = pct.toFixed(1) + '%';
+
+  const ts = localStorage.getItem(STORAGE_KEY + '_ts');
+  document.getElementById('lastUpdateNote').textContent = ts
+    ? 'Pembaruan terakhir: ' + new Date(ts).toLocaleString('id-ID', {dateStyle:'medium', timeStyle:'short'})
+    : 'Belum ada pembaruan data lapangan.';
+}
+
+/* ===================== RENDER: CHARTS ===================== */
+let chartKec, chartUpt;
+function renderCharts(rows){
+  const kecAgg = {};
+  rows.forEach(r=>{
+    if(!kecAgg[r.kec]) kecAgg[r.kec] = {target:0, done:0};
+    kecAgg[r.kec].target += r.target_total;
+    kecAgg[r.kec].done += r.actual_total;
+  });
+  const kecLabels = Object.keys(kecAgg).sort();
+  const kecPct = kecLabels.map(k=> kecAgg[k].target>0 ? +( (kecAgg[k].done/kecAgg[k].target)*100 ).toFixed(1) : 0);
+
+  const ctx1 = document.getElementById('chartKec').getContext('2d');
+  if(chartKec) chartKec.destroy();
+  chartKec = new Chart(ctx1, {
+    type:'bar',
+    data:{ labels:kecLabels, datasets:[{
+      label:'% Tersebar', data:kecPct,
+      backgroundColor: kecPct.map(p=> p>=100?'#3C7A5A': p>0?'#B9812C':'#A63D40'),
+      borderRadius:4, maxBarThickness:26
+    }]},
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:true,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>c.parsed.x+'% tersebar' } } },
+      scales:{ x:{ min:0, max:100, ticks:{callback:v=>v+'%', font:{family:'IBM Plex Mono', size:10}}, grid:{color:'#E7E1CD'} },
+               y:{ ticks:{font:{family:'IBM Plex Sans', size:10.5}}, grid:{display:false} } }
+    }
+  });
+
+  const uptAgg = {};
+  rows.forEach(r=>{
+    if(!uptAgg[r.upt]) uptAgg[r.upt] = {target:0, done:0};
+    uptAgg[r.upt].target += r.target_total;
+    uptAgg[r.upt].done += r.actual_total;
+  });
+  const uptLabels = Object.keys(uptAgg);
+  const doneVals = uptLabels.map(u=>uptAgg[u].done);
+  const remainVals = uptLabels.map(u=>Math.max(uptAgg[u].target-uptAgg[u].done,0));
+
+  const ctx2 = document.getElementById('chartUpt').getContext('2d');
+  if(chartUpt) chartUpt.destroy();
+  chartUpt = new Chart(ctx2, {
+    type:'bar',
+    data:{ labels:uptLabels, datasets:[
+      { label:'Sudah Disebar', data:doneVals, backgroundColor:'#3C7A5A', borderRadius:4, maxBarThickness:46 },
+      { label:'Belum Disebar', data:remainVals, backgroundColor:'#E7DCC0', borderRadius:4, maxBarThickness:46 }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{ legend:{ position:'bottom', labels:{font:{family:'IBM Plex Sans', size:11}, boxWidth:12} } },
+      scales:{ x:{ stacked:true, grid:{display:false}, ticks:{font:{family:'IBM Plex Sans', size:11}} },
+               y:{ stacked:true, ticks:{ font:{family:'IBM Plex Mono', size:10}, callback:v=>v.toLocaleString('id-ID') }, grid:{color:'#E7E1CD'} } }
+    }
+  });
+}
+
+/* ===================== RENDER: TERRACE GRID ===================== */
+const tooltip = document.getElementById('tooltip');
+function renderTerrace(rows){
+  const wrap = document.getElementById('terraceWrap');
+  wrap.innerHTML = '';
+  const byUpt = {};
+  rows.forEach(r=>{ (byUpt[r.upt] = byUpt[r.upt]||[]).push(r); });
+
+  Object.keys(byUpt).sort().forEach(upt=>{
+    const uptDiv = document.createElement('div');
+    uptDiv.className = 'terrace-upt';
+    const label = document.createElement('div');
+    label.className = 'terrace-upt-label';
+    label.textContent = upt;
+    uptDiv.appendChild(label);
+
+    const byKec = {};
+    byUpt[upt].forEach(r=>{ (byKec[r.kec] = byKec[r.kec]||[]).push(r); });
+
+    Object.keys(byKec).sort().forEach(kec=>{
+      const rowDiv = document.createElement('div');
+      rowDiv.className = 'terrace-kec-row';
+      const kecLabel = document.createElement('div');
+      kecLabel.className = 'terrace-kec-name';
+      kecLabel.textContent = kec;
+      rowDiv.appendChild(kecLabel);
+
+      const cellsDiv = document.createElement('div');
+      cellsDiv.className = 'terrace-cells';
+      byKec[kec].sort((a,b)=>a.desa.localeCompare(b.desa)).forEach(r=>{
+        const cell = document.createElement('div');
+        cell.className = 'terrace-cell';
+        cell.style.background = colorForPct(r.pct);
+        cell.addEventListener('mousemove', e=>{
+          tooltip.style.display='block';
+          tooltip.style.left = (e.clientX+14)+'px';
+          tooltip.style.top = (e.clientY+14)+'px';
+          tooltip.innerHTML = `<b>${r.desa}</b><br>${r.kec}, ${r.upt}<br>${fmt(r.actual_total)} / ${fmt(r.target_total)} SPPT (${r.pct.toFixed(1)}%)`;
+        });
+        cell.addEventListener('mouseleave', ()=>{ tooltip.style.display='none'; });
+        cellsDiv.appendChild(cell);
+      });
+      rowDiv.appendChild(cellsDiv);
+      uptDiv.appendChild(rowDiv);
+    });
+    wrap.appendChild(uptDiv);
+  });
+}
+function colorForPct(pct){
+  if(pct <= 0) return '#D7ACA9';
+  if(pct >= 100) return '#3C7A5A';
+  if(pct < 50){
+    // blend none -> partial
+    const t = pct/50;
+    return blend('#D7ACA9','#D9A94F', t);
+  }
+  const t = (pct-50)/50;
+  return blend('#D9A94F','#5B9B78', t);
+}
+function blend(c1,c2,t){
+  const a = hexToRgb(c1), b = hexToRgb(c2);
+  const r = Math.round(a[0]+(b[0]-a[0])*t);
+  const g = Math.round(a[1]+(b[1]-a[1])*t);
+  const bl= Math.round(a[2]+(b[2]-a[2])*t);
+  return `rgb(${r},${g},${bl})`;
+}
+function hexToRgb(hex){
+  const v = hex.replace('#','');
+  return [parseInt(v.slice(0,2),16), parseInt(v.slice(2,4),16), parseInt(v.slice(4,6),16)];
+}
+
+/* ===================== RENDER: TABLE ===================== */
+function renderTable(rows){
+  const sorted = [...rows].sort((a,b)=>{
+    let va = a[sortState.key], vb = b[sortState.key];
+    if(typeof va === 'string'){ va = va.toLowerCase(); vb = vb.toLowerCase(); }
+    if(va < vb) return sortState.dir==='asc' ? -1 : 1;
+    if(va > vb) return sortState.dir==='asc' ? 1 : -1;
+    return 0;
+  });
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = sorted.map(r=>{
+    const badgeClass = r.status;
+    const badgeText = r.status==='done' ? 'Selesai' : r.status==='partial' ? 'Proses' : 'Belum Mulai';
+    return `<tr>
+      <td>${r.upt}</td>
+      <td>${r.kec}</td>
+      <td class="name-cell">${r.desa}</td>
+      <td>${fmt(r.target_total)}</td>
+      <td>${fmt(r.actual_total)}</td>
+      <td>${fmt(r.remain)}</td>
+      <td>
+        <span class="bar-track"><span class="bar-fill" style="width:${r.pct}%; background:${r.status==='done'?'#3C7A5A': r.status==='partial'?'#B9812C':'#A63D40'}"></span></span>
+        <span class="pct-text">${r.pct.toFixed(1)}%</span>
+      </td>
+      <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tableCount').textContent = `${rows.length} baris ditampilkan`;
+  const totalTarget = rows.reduce((a,r)=>a+r.target_total,0);
+  const totalDone = rows.reduce((a,r)=>a+r.actual_total,0);
+  document.getElementById('tableFoot').textContent = `Total pada tampilan ini: ${fmt(totalDone)} / ${fmt(totalTarget)} SPPT tersebar`;
+}
+
+document.querySelectorAll('#mainTable thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if(sortState.key === key){ sortState.dir = sortState.dir==='asc'?'desc':'asc'; }
+    else { sortState = { key, dir: 'asc' }; }
+    document.querySelectorAll('#mainTable thead th .arrow').forEach(a=>a.textContent='');
+    th.querySelector('.arrow').textContent = sortState.dir==='asc' ? '▲' : '▼';
+    renderTable(getFiltered());
+  });
+});
+
+/* ===================== MASTER RENDER ===================== */
+function renderAll(){
+  const rows = getFiltered();
+  renderStats(rows);
+  renderCharts(rows);
+  renderTerrace(rows);
+  renderTable(rows);
+}
+renderAll();
+
+/* ===================== EXPORT (dashboard) ===================== */
+document.getElementById('btnExport').addEventListener('click', ()=>{
+  const rows = getFiltered();
+  let csv = 'UPT;Kecamatan;Desa;Target Buku123;Target Buku45;Target Total;Actual Buku123;Actual Buku45;Actual Total;Sisa;Persentase;Status\n';
+  rows.forEach(r=>{
+    const statusText = r.status==='done'?'Selesai':r.status==='partial'?'Proses':'Belum Mulai';
+    csv += [r.upt,r.kec,r.desa,r.target_b123,r.target_b45,r.target_total,r.actual_b123,r.actual_b45,r.actual_total,r.remain,r.pct.toFixed(1)+'%',statusText].join(';') + '\n';
+  });
+  downloadFile('sebaran_sppt_export_' + dateStamp() + '.csv', csv, 'text/csv;charset=utf-8;');
+});
+function dateStamp(){ return new Date().toISOString().slice(0,10); }
+function downloadFile(filename, content, mime){
+  const blob = new Blob(['\ufeff'+content], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ===================== INPUT PETUGAS: GATE (PIN per UPT, divalidasi server) ===================== */
+let currentUpt = null;
+let currentPin = null; // disimpan sementara di memori (bukan localStorage) untuk keperluan ubah PIN
+
+document.getElementById('btnUnlock').addEventListener('click', tryUnlock);
+document.getElementById('pinInput').addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
+
+async function tryUnlock(){
+  const val = document.getElementById('pinInput').value.trim();
+  const errEl = document.getElementById('pinErr');
+  const btn = document.getElementById('btnUnlock');
+  if(!val) return;
+  if(!getSyncUrl()){
+    errEl.textContent = 'Sinkronisasi server belum aktif, PIN tidak dapat diperiksa.';
+    return;
+  }
+  btn.disabled = true;
+  errEl.textContent = 'Memeriksa PIN...';
+  try{
+    const res = await fetch(getSyncUrl(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action:'checkPin', pin: val })
+    });
+    const json = await res.json();
+    if(!json.ok){
+      errEl.textContent = json.error || 'PIN salah. Periksa kembali PIN UPT wilayah Anda.';
+      btn.disabled = false;
+      return;
+    }
+    currentUpt = json.upt;
+    currentPin = val;
+    document.getElementById('gateBox').style.display = 'none';
+    document.getElementById('inputBox').style.display = 'block';
+    errEl.textContent = '';
+    document.getElementById('pinInput').value = '';
+    document.getElementById('currentUptLabel').textContent = currentUpt;
+    document.getElementById('pinUptLabel').textContent = currentUpt;
+
+    const iUpt = document.getElementById('iUpt');
+    fillSelect(iUpt, [currentUpt], 'Pilih UPT');
+    iUpt.value = currentUpt;
+    iUpt.dispatchEvent(new Event('change'));
+
+    renderLog();
+  }catch(err){
+    errEl.textContent = 'Tidak dapat menghubungi server. Periksa koneksi internet Anda.';
+  }
+  btn.disabled = false;
+}
+document.getElementById('btnLock').addEventListener('click', ()=>{
+  currentUpt = null;
+  currentPin = null;
+  document.getElementById('gateBox').style.display = 'block';
+  document.getElementById('inputBox').style.display = 'none';
+  document.getElementById('petugasName').value = '';
+  resetTargetBox();
+});
+document.getElementById('btnChangePin').addEventListener('click', async ()=>{
+  if(!currentUpt || !currentPin) return;
+  const np = document.getElementById('newPin').value.trim();
+  if(np.length < 4){ alert('PIN minimal 4 karakter.'); return; }
+  if(!getSyncUrl()){ alert('Sinkronisasi server belum aktif, PIN tidak dapat diubah.'); return; }
+  const btn = document.getElementById('btnChangePin');
+  btn.disabled = true;
+  try{
+    const res = await fetch(getSyncUrl(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action:'changePin', upt: currentUpt, oldPin: currentPin, newPin: np })
+    });
+    const json = await res.json();
+    if(!json.ok){ alert(json.error || 'Gagal mengubah PIN.'); btn.disabled = false; return; }
+    currentPin = np;
+    document.getElementById('newPin').value = '';
+    alert('PIN untuk ' + currentUpt + ' berhasil diubah.');
+  }catch(err){
+    alert('Tidak dapat menghubungi server. Periksa koneksi internet Anda.');
+  }
+  btn.disabled = false;
+});
+
+/* ===================== INPUT PETUGAS: FORM ===================== */
+document.getElementById('iUpt').addEventListener('change', e=>{
+  const upt = e.target.value;
+  fillSelect(document.getElementById('iKec'), upt ? kecByUpt[upt] : [], 'Pilih Kecamatan');
+  fillSelect(document.getElementById('iDesa'), [], 'Pilih Desa');
+  resetTargetBox();
+});
+document.getElementById('iKec').addEventListener('change', e=>{
+  const upt = document.getElementById('iUpt').value;
+  const kec = e.target.value;
+  const desas = MASTER_DATA.filter(d=>d.upt===upt && d.kec===kec).map(d=>d.desa).sort();
+  fillSelect(document.getElementById('iDesa'), desas, 'Pilih Desa');
+  resetTargetBox();
+});
+document.getElementById('iDesa').addEventListener('change', showTarget);
+
+function findRow(upt,kec,desa){
+  return dataset.find(d=>d.upt===upt && d.kec===kec && d.desa===desa);
+}
+function resetTargetBox(){
+  document.getElementById('targetBox').classList.remove('show');
+  document.getElementById('btnSave').disabled = true;
+  document.getElementById('iB123').value = '';
+  document.getElementById('iB45').value = '';
+}
+function showTarget(){
+  const upt = document.getElementById('iUpt').value;
+  const kec = document.getElementById('iKec').value;
+  const desa = document.getElementById('iDesa').value;
+  if(!upt||!kec||!desa){ resetTargetBox(); return; }
+  const row = findRow(upt,kec,desa);
+  if(!row) return;
+  document.getElementById('tB123').textContent = fmt(row.target_b123);
+  document.getElementById('tB45').textContent = fmt(row.target_b45);
+  document.getElementById('tTotal').textContent = fmt(row.target_total);
+  document.getElementById('tPrev').textContent = fmt((row.actual_b123||0)+(row.actual_b45||0));
+  document.getElementById('targetBox').classList.add('show');
+  document.getElementById('iB123').value = row.actual_b123 || '';
+  document.getElementById('iB45').value = row.actual_b45 || '';
+  document.getElementById('btnSave').disabled = false;
+}
+
+document.getElementById('btnSave').addEventListener('click', ()=>{
+  const upt = document.getElementById('iUpt').value;
+  const kec = document.getElementById('iKec').value;
+  const desa = document.getElementById('iDesa').value;
+  const petugas = document.getElementById('petugasName').value.trim() || 'Tanpa nama';
+  const b123 = Math.max(0, parseInt(document.getElementById('iB123').value)||0);
+  const b45 = Math.max(0, parseInt(document.getElementById('iB45').value)||0);
+  const row = findRow(upt,kec,desa);
+  if(!row) return;
+
+  const statusEl = document.getElementById('saveStatus');
+  if(b123 > row.target_b123 || b45 > row.target_b45){
+    statusEl.className = 'save-status warn';
+    statusEl.textContent = '⚠ Jumlah melebihi target tercatat, namun tetap disimpan. Mohon periksa kembali.';
+  } else {
+    statusEl.className = 'save-status ok';
+    statusEl.textContent = '✓ Pembaruan berhasil disimpan.';
+  }
+
+  row.actual_b123 = b123;
+  row.actual_b45 = b45;
+  row.actual_total = b123 + b45;
+  persistData();
+
+  const log = loadLog();
+  log.unshift({
+    time: new Date().toISOString(),
+    petugas, upt, kec, desa,
+    b123, b45, total: b123+b45
+  });
+  persistLog(log);
+  renderLog();
+  renderAll();
+  setTimeout(()=>{ statusEl.textContent=''; }, 4000);
+
+  // kirim ke Google Sheets (server). Bila gagal/offline, disimpan dulu di antrean lokal.
+  const updatePayload = { action:'update', upt, kec, desa, actual_b123:b123, actual_b45:b45, petugas };
+  if(getSyncUrl()){
+    pushSingleUpdate(updatePayload).then(()=>{
+      updateSyncStatus();
+    }).catch(()=>{
+      enqueueUpdate(updatePayload);
+    });
+  }
+});
+
+/* ===================== SINKRONISASI: EVENT HANDLERS ===================== */
+document.getElementById('btnSyncNow').addEventListener('click', ()=>{ syncFromServer(true); });
+
+updateSyncStatus();
+if(getSyncUrl()){ syncFromServer(false); }
+window.addEventListener('online', flushSyncQueue);
+setInterval(()=>{ if(getSyncUrl()) flushSyncQueue(); }, 60000);
+
+function renderLog(){
+  const log = loadLog().filter(l => !currentUpt || l.upt === currentUpt);
+  const el = document.getElementById('logList');
+  if(log.length === 0){
+    el.innerHTML = '<div class="empty-note">Belum ada pembaruan tercatat untuk UPT ini.</div>';
+    return;
+  }
+  el.innerHTML = log.slice(0,12).map(l=>`
+    <div class="log-item">
+      <div>
+        <div>${l.desa}, ${l.kec}</div>
+        <div class="who">${l.petugas} &middot; ${new Date(l.time).toLocaleString('id-ID',{dateStyle:'short', timeStyle:'short'})}</div>
+      </div>
+      <div style="font-family:'IBM Plex Mono'; font-weight:600; color:var(--ink);">${fmt(l.total)}</div>
+    </div>
+  `).join('');
+}
+
+/* ===================== BACKUP / RESTORE ===================== */
+document.getElementById('btnExportJson').addEventListener('click', ()=>{
+  const backup = { exported_at: new Date().toISOString(), dataset, log: loadLog() };
+  downloadFile('backup_sppt_' + dateStamp() + '.json', JSON.stringify(backup, null, 2), 'application/json');
+});
+document.getElementById('btnImportJson').addEventListener('click', ()=>{
+  document.getElementById('fileImport').click();
+});
+document.getElementById('fileImport').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = evt=>{
+    try{
+      const parsed = JSON.parse(evt.target.result);
+      if(!parsed.dataset || !Array.isArray(parsed.dataset)) throw new Error('format tidak sesuai');
+      if(!confirm('Impor akan menimpa data saat ini di perangkat ini. Lanjutkan?')) return;
+      dataset = parsed.dataset;
+      persistData();
+      if(parsed.log) persistLog(parsed.log);
+      renderLog();
+      renderAll();
+      alert('Data berhasil diimpor.');
+    }catch(err){
+      alert('Gagal mengimpor file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+document.getElementById('btnResetData').addEventListener('click', ()=>{
+  if(!confirm('Ini akan mengembalikan seluruh data ke target awal (menghapus semua pembaruan sebaran). Lanjutkan?')) return;
+  dataset = JSON.parse(JSON.stringify(MASTER_DATA));
+  persistData();
+  persistLog([]);
+  renderLog();
+  renderAll();
+  alert('Data telah dikembalikan ke target awal.');
+});
+</script>
+</body>
+</html>
